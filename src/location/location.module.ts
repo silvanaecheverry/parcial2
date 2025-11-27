@@ -3,6 +3,7 @@ import { LocationService } from './location.service';
 import { LocationController } from './location.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Token } from 'src/token/entities/token.entity';
+import { Location } from './entities/location.entity';
 
 @Module({
   controllers: [LocationController],
