@@ -1,8 +1,8 @@
 import {
   CanActivate,
   ExecutionContext,
-  Injectable,
   ForbiddenException,
+  Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Token } from 'src/token/entities/token.entity';
@@ -25,7 +25,7 @@ export class ApiTokenGuard implements CanActivate {
     }
 
     const token = await this.tokenRepository.findOne({
-      where: { token: tokenFromHeader },
+      where: { token: tokenFromHeader as string },
     });
 
     if (!token) {
@@ -35,6 +35,10 @@ export class ApiTokenGuard implements CanActivate {
     if (!token.active || token.reqLeft <= 0) {
       throw new ForbiddenException('Token no usable');
     }
+
+    // actualizar reqLeft en cada ejecución
+    token.reqLeft -= 1;
+    await this.tokenRepository.save(token);
 
     return true;
   }
