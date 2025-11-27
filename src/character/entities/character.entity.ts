@@ -15,13 +15,13 @@ export class Character {
   @Column()
   employee: boolean;
 
-  // Propiedad (1–1 con Location)
+  
   @OneToOne(() => Location, (location) => location.owner, {
     nullable: true,
   })
   property?: Location;
 
-  // Favoritos (N–N con Location)
+
   @ManyToMany(() => Location, (location) => location.favCharacters, {
     cascade: true,
   })

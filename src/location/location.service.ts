@@ -1,26 +1,63 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Location } from './entities/location.entity';
 import { CreateLocationDto } from './dto/create-location.dto';
-import { UpdateLocationDto } from './dto/update-location.dto';
+import { Character } from 'src/character/entities/character.entity';
 
 @Injectable()
 export class LocationService {
-  create(createLocationDto: CreateLocationDto) {
-    return 'This action adds a new location';
+  constructor(
+    @InjectRepository(Location)
+    private readonly locationRepository: Repository<Location>,
+    @InjectRepository(Character)
+    private readonly characterRepository: Repository<Character>,
+  ) {}
+
+  // post
+  async create(createLocationDto: CreateLocationDto) {
+    const { ownerId, ...data } = createLocationDto;
+
+    const owner = await this.characterRepository.findOne({
+      where: { id: ownerId },
+      relations: ['property'],
+    });
+
+    if (!owner) {
+      throw new BadRequestException('El dueño no existe');
+    }
+
+    if (owner.property) {
+      throw new BadRequestException('El dueño ya tiene una propiedad');
+    }
+
+    const location = this.locationRepository.create({
+      ...data,
+      owner,
+    });
+
+    return this.locationRepository.save(location);
   }
 
-  findAll() {
-    return `This action returns all location`;
+  // get  
+  async findAll() {
+    return this.locationRepository.find({
+      relations: ['favCharacters', 'owner'],
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} location`;
-  }
+  async findOne(id: number) {
+    const loc = await this.locationRepository.findOne({
+      where: { id },
+      relations: ['owner', 'favCharacters'],
+    });
 
-  update(id: number, updateLocationDto: UpdateLocationDto) {
-    return `This action updates a #${id} location`;
-  }
+    if (!loc) throw new NotFoundException('Location no encontrada');
 
-  remove(id: number) {
-    return `This action removes a #${id} location`;
+    return loc;
   }
 }
